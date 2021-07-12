@@ -1,0 +1,13 @@
+version: v2
+
+tasks:
+  compile:
+    runner: razorci/python:3.8
+    steps:
+    - checkout
+    - commands:
+      - echo hello
+      - ls
+      - pip install .
+      - pip install pytest pytest-aiohttp
+    - run: pytest
