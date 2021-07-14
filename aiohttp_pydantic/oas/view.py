@@ -16,6 +16,9 @@ from ..view import PydanticView, is_pydantic_view
 from .typing import is_status_code_type
 
 
+SCHEMA_REF_TEMPLATE = "#/components/schemas/{model}"
+
+
 def _handle_optional(type_):
     """
     Returns the type wrapped in Optional or None.
@@ -29,6 +32,14 @@ def _handle_optional(type_):
         if len(args) == 2 and type(None) in args:
             return next(iter(set(args) - {type(None)}))
     return None
+
+
+def _make_ref(model_name: str) -> str:
+    return SCHEMA_REF_TEMPLATE.format(model=model_name)
+
+
+def _make_ref_items(model_name: str) -> dict:
+    return {'$ref': _make_ref(model_name)}
 
 
 class _OASResponseBuilder:
@@ -49,7 +60,9 @@ class _OASResponseBuilder:
             ).copy()
             if def_sub_schemas := response_schema.pop("definitions", None):
                 self._oas.components.schemas.update(def_sub_schemas)
-            return response_schema
+            model_name = response_schema['title']
+            self._oas.components.schemas.update({model_name: response_schema})
+            return _make_ref_items(model_name)
         return {}
 
     def _handle_list(self, obj):
